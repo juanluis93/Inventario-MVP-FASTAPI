@@ -1,8 +1,9 @@
 """Configuración de la base de datos."""
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 
-DATABASE_URL = "sqlite:///./inventario.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./inventario.db")
 # Para PostgreSQL: "postgresql://user:password@localhost/inventario"
 
 engine = create_engine(

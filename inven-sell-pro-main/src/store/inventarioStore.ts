@@ -1,11 +1,7 @@
 import { create } from 'zustand';
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000').replace(/\/$/, '');
-const AUTH_USER = import.meta.env.VITE_API_USER ?? 'admin';
-const AUTH_PASS = import.meta.env.VITE_API_PASS ?? 'admin123';
 const TOKEN_STORAGE_KEY = 'inventa_pro_token';
-
-let tokenPromise: Promise<string> | null = null;
 
 type ApiError = {
   detail?: string | Array<{ msg?: string }>;
@@ -35,73 +31,12 @@ const clearStoredToken = () => {
   localStorage.removeItem(TOKEN_STORAGE_KEY);
 };
 
-const registerFallbackUser = async () => {
-  const response = await fetch(`${API_BASE}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: AUTH_USER, password: AUTH_PASS }),
-  });
-
-  if (response.ok || response.status === 400) return;
-
-  let payload: ApiError | null = null;
-  try {
-    payload = (await response.json()) as ApiError;
-  } catch {
-    payload = null;
-  }
-
-  throw new Error(extractApiErrorMessage(payload, 'No fue posible registrar usuario para la API'));
-};
-
-const loginAndGetToken = async () => {
-  const body = new URLSearchParams();
-  body.append('username', AUTH_USER);
-  body.append('password', AUTH_PASS);
-
-  const response = await fetch(`${API_BASE}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body,
-  });
-
-  if (!response.ok) {
-    let payload: ApiError | null = null;
-    try {
-      payload = (await response.json()) as ApiError;
-    } catch {
-      payload = null;
-    }
-    throw new Error(extractApiErrorMessage(payload, 'No fue posible iniciar sesion en la API'));
-  }
-
-  const payload = (await response.json()) as { access_token: string };
-  if (!payload?.access_token) {
-    throw new Error('La API no devolvio un token valido');
-  }
-
-  setStoredToken(payload.access_token);
-  return payload.access_token;
-};
-
 const ensureToken = async () => {
   const stored = getStoredToken();
-  if (stored) return stored;
-
-  if (!tokenPromise) {
-    tokenPromise = (async () => {
-      try {
-        return await loginAndGetToken();
-      } catch {
-        await registerFallbackUser();
-        return loginAndGetToken();
-      } finally {
-        tokenPromise = null;
-      }
-    })();
+  if (!stored) {
+    throw new Error('Debes iniciar sesion para acceder a esta informacion');
   }
-
-  return tokenPromise;
+  return stored;
 };
 
 const apiRequest = async <T>(
@@ -129,7 +64,7 @@ const apiRequest = async <T>(
 
   if (requiresAuth && response.status === 401 && retryOnUnauthorized) {
     clearStoredToken();
-    return apiRequest<T>(path, init, true, false);
+    throw new Error('Tu sesion expiro. Inicia sesion nuevamente');
   }
 
   if (response.status === 204) {
@@ -216,8 +151,8 @@ export const useInventarioStore = create<InventarioState>((set, get) => ({
     set({ cargando: true, errorCarga: null });
     try {
       const [productos, ventas] = await Promise.all([
-        apiRequest<Producto[]>('/productos/'),
-        apiRequest<Venta[]>('/ventas/'),
+        apiRequest<Producto[]>('/productos/', undefined, true),
+        apiRequest<Venta[]>('/ventas/', undefined, true),
       ]);
 
       set({

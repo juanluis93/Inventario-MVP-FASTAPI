@@ -2,12 +2,16 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from typing import List
-from app.database.connection import get_db
-from app.schemas.venta import VentaCreate, VentaUpdate, VentaResponse
-from app.services import venta_service
-from app.services.auth_service import get_current_user
+from database.connection import get_db
+from schemas.venta import VentaCreate, VentaUpdate, VentaResponse
+from services import venta_service
+from services.auth_service import get_current_user
 
-router = APIRouter(prefix="/ventas", tags=["Ventas"])
+router = APIRouter(
+    prefix="/ventas",
+    tags=["Ventas"],
+    dependencies=[Depends(get_current_user)],
+)
 
 
 @router.get("/", response_model=List[VentaResponse])
@@ -21,15 +25,15 @@ def obtener(venta_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=VentaResponse, status_code=status.HTTP_201_CREATED)
-def crear(data: VentaCreate, db: Session = Depends(get_db), _=Depends(get_current_user)):
+def crear(data: VentaCreate, db: Session = Depends(get_db)):
     return venta_service.crear_venta(db, data)
 
 
 @router.patch("/{venta_id}", response_model=VentaResponse)
-def editar(venta_id: int, data: VentaUpdate, db: Session = Depends(get_db), _=Depends(get_current_user)):
+def editar(venta_id: int, data: VentaUpdate, db: Session = Depends(get_db)):
     return venta_service.editar_venta(db, venta_id, data)
 
 
 @router.post("/{venta_id}/anular", response_model=VentaResponse)
-def anular(venta_id: int, db: Session = Depends(get_db), _=Depends(get_current_user)):
+def anular(venta_id: int, db: Session = Depends(get_db)):
     return venta_service.anular_venta(db, venta_id)

@@ -3,7 +3,7 @@ from sqlalchemy import Column, Integer, Float, String, DateTime, Enum as SAEnum
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 import enum
-from app.database.connection import Base
+from database.connection import Base
 
 
 class EstadoVenta(str, enum.Enum):

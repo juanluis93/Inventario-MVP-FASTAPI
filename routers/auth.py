@@ -1,13 +1,13 @@
-"""Endpoints de autenticación."""
+"""Endpoints de autenticacion."""
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from app.database.connection import get_db
-from app.models.usuario import Usuario
-from app.schemas.usuario import UsuarioCreate, UsuarioResponse, Token
-from app.services.auth_service import hash_password, verify_password, create_token
 
-router = APIRouter(prefix="/auth", tags=["Autenticación"])
+from database.connection import get_db
+from models.usuario import Usuario
+from schemas.usuario import UsuarioCreate, UsuarioLogin, UsuarioResponse, Token
+from services.auth_service import create_token, hash_password, verify_password
+
+router = APIRouter(prefix="/auth", tags=["Autenticacion"])
 
 
 @router.post("/register", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
@@ -22,9 +22,9 @@ def registrar(data: UsuarioCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
-def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(Usuario).filter(Usuario.username == form.username).first()
-    if not user or not verify_password(form.password, user.hashed_password):
+def login(data: UsuarioLogin, db: Session = Depends(get_db)):
+    user = db.query(Usuario).filter(Usuario.username == data.username).first()
+    if not user or not verify_password(data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Credenciales incorrectas")
     token = create_token({"sub": user.username})
     return {"access_token": token, "token_type": "bearer"}

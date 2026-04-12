@@ -1,8 +1,8 @@
 """Lógica de negocio para Productos."""
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from app.models.producto import Producto
-from app.schemas.producto import ProductoCreate, ProductoUpdate
+from models.producto import Producto
+from schemas.producto import ProductoCreate, ProductoUpdate
 
 
 def listar_productos(db: Session, skip: int = 0, limit: int = 100) -> list[Producto]:

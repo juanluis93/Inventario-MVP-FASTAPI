@@ -1,10 +1,10 @@
 """Lógica de negocio para Ventas."""
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
-from app.models.venta import Venta, EstadoVenta
-from app.models.detalle_venta import DetalleVenta
-from app.models.producto import Producto
-from app.schemas.venta import VentaCreate, VentaUpdate
+from models.venta import Venta, EstadoVenta
+from models.detalle_venta import DetalleVenta
+from models.producto import Producto
+from schemas.venta import VentaCreate, VentaUpdate
 
 
 def _validar_y_preparar_detalles(db: Session, detalles_data) -> list[dict]:

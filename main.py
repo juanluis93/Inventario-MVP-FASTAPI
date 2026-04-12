@@ -6,8 +6,8 @@ Documentación: http://127.0.0.1:8000/docs
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database.connection import engine, Base
-from app.routers import productos, ventas, auth
+from database.connection import engine, Base
+from routers import productos, ventas, auth
 
 # Crear tablas al iniciar
 Base.metadata.create_all(bind=engine)
@@ -29,9 +29,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth.router)
-app.include_router(productos.router)
-app.include_router(ventas.router)
+app.include_router(auth)
+app.include_router(productos)
+app.include_router(ventas)
 
 
 @app.get("/", tags=["Root"])

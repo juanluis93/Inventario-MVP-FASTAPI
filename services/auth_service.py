@@ -1,16 +1,17 @@
 """Servicio de autenticación JWT."""
+import os
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from app.models.usuario import Usuario
-from app.database.connection import get_db
+from models.usuario import Usuario
+from database.connection import get_db
 
-SECRET_KEY = "cambia-esto-en-produccion-usa-variable-de-entorno"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+SECRET_KEY = os.getenv("SECRET_KEY", "cambia-esto-en-produccion-usa-variable-de-entorno")
+ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
 # Use PBKDF2 to avoid runtime issues with bcrypt backend versions.
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
