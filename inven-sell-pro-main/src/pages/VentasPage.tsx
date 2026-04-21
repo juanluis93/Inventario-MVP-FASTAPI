@@ -127,12 +127,13 @@ const VentasPage = () => {
   };
 
   const handleCrear = async () => {
-    const validas = lineas.filter((linea) => linea.producto_id > 0 && linea.cantidad > 0);
-
-    if (validas.length === 0) {
-      toast.error('Agrega al menos un producto a la venta');
+    const lineaInvalida = lineas.find((linea) => linea.producto_id <= 0 || linea.cantidad <= 0);
+    if (lineaInvalida) {
+      toast.warning('Debes indicar valor para todos los campos de la venta');
       return;
     }
+
+    const validas = lineas;
 
     const productoDuplicado = validas.some(
       (linea, index) => validas.findIndex((item) => item.producto_id === linea.producto_id) !== index
@@ -162,7 +163,7 @@ const VentasPage = () => {
       return;
     }
 
-    toast.success('Venta registrada');
+    toast.success('Venta registrada correctamente');
     setCreateOpen(false);
     resetVentaForm();
   };
@@ -251,7 +252,7 @@ const VentasPage = () => {
         <table className="min-w-full border-separate border-spacing-0">
           <thead className="bg-[#0f161f]">
             <tr>
-              <th className="border-b border-[#21262d] px-5 py-3 text-left text-[11px] uppercase tracking-[0.18em] text-[#8b949e]">ID</th>
+              <th className="border-b border-[#21262d] px-5 py-3 text-left text-[11px] uppercase tracking-[0.18em] text-[#8b949e]">Numero Venta</th>
               <th className="border-b border-[#21262d] px-5 py-3 text-left text-[11px] uppercase tracking-[0.18em] text-[#8b949e]">Fecha</th>
               <th className="border-b border-[#21262d] px-5 py-3 text-center text-[11px] uppercase tracking-[0.18em] text-[#8b949e]">Items</th>
               <th className="border-b border-[#21262d] px-5 py-3 text-right text-[11px] uppercase tracking-[0.18em] text-[#8b949e]">Total</th>
@@ -271,7 +272,7 @@ const VentasPage = () => {
             ) : (
               currentVentas.map((venta) => (
                 <tr key={venta.id} className="border-b border-[#21262d] hover:bg-[#1c2128]">
-                  <td className={`px-5 py-4 font-mono text-xs ${venta.estado === 'activa' ? 'text-[#00e676]' : 'text-[#8b949e]'}`}>#VEN-{venta.id}</td>
+                  <td className={`px-5 py-4 font-mono text-xs ${venta.estado === 'activa' ? 'text-[#00e676]' : 'text-[#8b949e]'}`}>{venta.numero_venta}</td>
                   <td className="px-5 py-4">
                     <div className="text-sm font-semibold text-[#e6edf3]">{formatDateLabel(venta.fecha)}</div>
                     <div className="text-xs text-[#8b949e]">{formatTimeLabel(venta.fecha)}</div>
@@ -280,7 +281,7 @@ const VentasPage = () => {
                   <td className="px-5 py-4 text-right font-mono text-[#e6edf3]">${venta.total.toFixed(2)}</td>
                   <td className="px-5 py-4 text-center">
                     {venta.estado === 'activa' ? (
-                      <span className="inline-flex rounded-full bg-[#00e676]/10 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#00e676]">Activa</span>
+                      <span className="inline-flex rounded-full bg-[#00e676]/10 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#00e676]">Completada</span>
                     ) : (
                       <span className="inline-flex rounded-full bg-[#f85149]/10 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#f85149]">Anulada</span>
                     )}
@@ -428,7 +429,7 @@ const VentasPage = () => {
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
         <DialogContent className="border-[#21262d] bg-[#161b22] text-[#e6edf3] sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Detalle de venta #{selectedVenta?.id}</DialogTitle>
+            <DialogTitle>Detalle de venta {selectedVenta?.numero_venta}</DialogTitle>
           </DialogHeader>
           {selectedVenta ? (
             <div className="space-y-4">
@@ -441,7 +442,7 @@ const VentasPage = () => {
                   <p className="text-[#8b949e]">Estado</p>
                   <div className="mt-2">
                     {selectedVenta.estado === 'activa' ? (
-                      <span className="inline-flex rounded-full bg-[#00e676]/10 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#00e676]">Activa</span>
+                      <span className="inline-flex rounded-full bg-[#00e676]/10 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#00e676]">Completada</span>
                     ) : (
                       <span className="inline-flex rounded-full bg-[#f85149]/10 px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#f85149]">Anulada</span>
                     )}

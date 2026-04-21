@@ -1,4 +1,5 @@
 """Lógica de negocio para Ventas."""
+import secrets
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from models.venta import Venta, EstadoVenta
@@ -27,9 +28,10 @@ def crear_venta(db: Session, data: VentaCreate) -> Venta:
     """Registra una venta, calcula el total y reduce stock."""
     items = _validar_y_preparar_detalles(db, data.detalles)
 
-    venta = Venta(total=0)
+    venta = Venta(total=0, numero_venta=f"TMP-{secrets.token_hex(4).upper()}")
     db.add(venta)
     db.flush()  # Obtener ID
+    venta.numero_venta = f"VEN-{str(venta.id).zfill(6)}"
 
     total = 0.0
     for item in items:

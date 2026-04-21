@@ -28,6 +28,7 @@ class VentaUpdate(BaseModel):
 
 class VentaResponse(BaseModel):
     id: int
+    numero_venta: str
     fecha: datetime
     total: float
     estado: str

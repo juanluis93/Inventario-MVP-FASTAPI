@@ -8,7 +8,8 @@ import { Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSearchContext } from '@/context/SearchContext';
 
-const emptyForm = { nombre: '', descripcion: '', precio: '', stock: '' };
+const CATEGORIAS_DEFAULT = ['Abarrotes', 'Bebidas', 'Limpieza', 'Lacteos', 'Snacks', 'Cuidado personal'];
+const emptyForm = { nombre: '', descripcion: '', categoria: '', precio: '', stock: '' };
 const palette = ['#00b894', '#00e676', '#22c55e', '#14b8a6', '#38bdf8'];
 
 const ProductosPage = () => {
@@ -27,7 +28,9 @@ const ProductosPage = () => {
     () =>
       productos.filter((p) =>
         p.nombre.toLowerCase().includes(query.toLowerCase()) ||
-        p.descripcion.toLowerCase().includes(query.toLowerCase())
+        p.descripcion.toLowerCase().includes(query.toLowerCase()) ||
+        p.categoria.toLowerCase().includes(query.toLowerCase()) ||
+        p.codigo.toLowerCase().includes(query.toLowerCase())
       ),
     [productos, query]
   );
@@ -53,16 +56,6 @@ const ProductosPage = () => {
     }
   }, [page, pageCount]);
 
-  const generateSku = (producto: Producto) => {
-    const prefix = producto.nombre
-      .split(' ')
-      .map((word) => word[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 4);
-    return `${prefix}-${String(producto.id).padStart(2, '0')}`;
-  };
-
   const resetForm = () => {
     setEditingId(null);
     setForm(emptyForm);
@@ -78,6 +71,7 @@ const ProductosPage = () => {
     setForm({
       nombre: producto.nombre,
       descripcion: producto.descripcion,
+      categoria: producto.categoria,
       precio: String(producto.precio),
       stock: String(producto.stock),
     });
@@ -92,8 +86,17 @@ const ProductosPage = () => {
   };
 
   const handleSubmit = async () => {
-    if (!form.nombre.trim() || !form.precio.trim() || form.stock.trim() === '') {
-      toast.error('Completa los campos obligatorios');
+    const requiredFields = [
+      { key: 'nombre', label: 'nombre' },
+      { key: 'descripcion', label: 'descripcion' },
+      { key: 'categoria', label: 'categoria' },
+      { key: 'precio', label: 'precio inicial' },
+      { key: 'stock', label: 'cantidad' },
+    ] as const;
+
+    const missing = requiredFields.find(({ key }) => form[key].trim() === '');
+    if (missing) {
+      toast.warning(`El campo ${missing.label} es obligatorio`);
       return;
     }
 
@@ -115,6 +118,7 @@ const ProductosPage = () => {
     const payload = {
       nombre: form.nombre.trim(),
       descripcion: form.descripcion.trim(),
+      categoria: form.categoria.trim(),
       precio,
       stock,
     };
@@ -130,7 +134,7 @@ const ProductosPage = () => {
       return;
     }
 
-    toast.success(editingId ? 'Producto actualizado' : 'Producto creado');
+    toast.success(editingId ? 'Producto actualizado correctamente' : 'Producto agregado correctamente');
     setDialogOpen(false);
     resetForm();
   };
@@ -202,6 +206,8 @@ const ProductosPage = () => {
           <thead className="bg-[#0f161f]">
             <tr>
               <th className="border-b border-[#21262d] px-5 py-3 text-left text-[11px] uppercase tracking-[0.18em] text-[#8b949e]">Producto</th>
+              <th className="border-b border-[#21262d] px-5 py-3 text-left text-[11px] uppercase tracking-[0.18em] text-[#8b949e]">Codigo</th>
+              <th className="border-b border-[#21262d] px-5 py-3 text-left text-[11px] uppercase tracking-[0.18em] text-[#8b949e]">Categoria</th>
               <th className="border-b border-[#21262d] px-5 py-3 text-left text-[11px] uppercase tracking-[0.18em] text-[#8b949e]">Descripcion</th>
               <th className="border-b border-[#21262d] px-5 py-3 text-right text-[11px] uppercase tracking-[0.18em] text-[#8b949e]">Precio</th>
               <th className="border-b border-[#21262d] px-5 py-3 text-center text-[11px] uppercase tracking-[0.18em] text-[#8b949e]">Stock</th>
@@ -211,11 +217,11 @@ const ProductosPage = () => {
           <tbody>
             {cargando ? (
               <tr>
-                <td colSpan={5} className="px-5 py-12 text-center text-sm text-[#8b949e]">Cargando productos...</td>
+                <td colSpan={7} className="px-5 py-12 text-center text-sm text-[#8b949e]">Cargando productos...</td>
               </tr>
             ) : currentProducts.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-5 py-12 text-center text-sm text-[#8b949e]">No se encontraron productos</td>
+                <td colSpan={7} className="px-5 py-12 text-center text-sm text-[#8b949e]">No se encontraron productos</td>
               </tr>
             ) : (
               currentProducts.map((producto) => {
@@ -229,10 +235,12 @@ const ProductosPage = () => {
                         </span>
                         <div>
                           <div className="font-medium text-[#e6edf3]">{producto.nombre}</div>
-                          <div className="text-xs text-[#8b949e]">SKU: {generateSku(producto)}</div>
+                          <div className="text-xs text-[#8b949e]">ID: {producto.id}</div>
                         </div>
                       </div>
                     </td>
+                    <td className="px-5 py-4 text-xs font-mono text-[#8b949e]">{producto.codigo}</td>
+                    <td className="px-5 py-4 text-sm text-[#8b949e]">{producto.categoria}</td>
                     <td className="px-5 py-4 text-sm text-[#8b949e]">{producto.descripcion || 'Sin descripcion'}</td>
                     <td className="px-5 py-4 text-right font-mono text-[#00e676]">${producto.precio.toFixed(2)}</td>
                     <td className="px-5 py-4 text-center">{renderStockBadge(producto.stock)}</td>
@@ -330,6 +338,31 @@ const ProductosPage = () => {
                 className="border-[#21262d] bg-[#0d1117] text-[#e6edf3] focus-visible:ring-0 focus-visible:ring-offset-0"
               />
             </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-[#e6edf3]">Categoria *</label>
+                <select
+                  value={form.categoria}
+                  onChange={(event) => setForm({ ...form, categoria: event.target.value })}
+                  className="flex h-10 w-full rounded-md border border-[#21262d] bg-[#0d1117] px-3 py-2 text-sm text-[#e6edf3]"
+                >
+                  <option value="">Selecciona una categoria</option>
+                  {CATEGORIAS_DEFAULT.map((categoria) => (
+                    <option key={categoria} value={categoria}>
+                      {categoria}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-[#e6edf3]">Codigo</label>
+                <Input
+                  value={editingId ? productos.find((item) => item.id === editingId)?.codigo ?? '' : 'Se genera automaticamente'}
+                  disabled
+                  className="border-[#21262d] bg-[#0d1117] text-[#8b949e]"
+                />
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-[#e6edf3]">Precio *</label>
@@ -344,7 +377,7 @@ const ProductosPage = () => {
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-[#e6edf3]">Stock *</label>
+                <label className="mb-1.5 block text-sm font-medium text-[#e6edf3]">Cantidad *</label>
                 <Input
                   type="number"
                   min="0"

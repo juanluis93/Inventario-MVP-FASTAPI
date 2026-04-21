@@ -92,6 +92,7 @@ const apiRequest = async <T>(
 const normalizeProducto = (producto: Producto) => ({
   ...producto,
   descripcion: producto.descripcion ?? '',
+  categoria: producto.categoria ?? 'Abarrotes',
 });
 
 // --- Types ---
@@ -99,6 +100,16 @@ export interface Producto {
   id: number;
   nombre: string;
   descripcion: string;
+  categoria: string;
+  codigo: string;
+  precio: number;
+  stock: number;
+}
+
+export interface ProductoPayload {
+  nombre: string;
+  descripcion: string;
+  categoria: string;
   precio: number;
   stock: number;
 }
@@ -115,11 +126,17 @@ export interface DetalleVenta {
 
 export interface Venta {
   id: number;
+  numero_venta: string;
   fecha: string;
   total: number;
   estado: EstadoVenta;
   detalles: DetalleVenta[];
 }
+
+const normalizeVenta = (venta: Venta) => ({
+  ...venta,
+  numero_venta: venta.numero_venta ?? `VEN-${String(venta.id).padStart(6, '0')}`,
+});
 
 // --- Store ---
 interface InventarioState {
@@ -131,8 +148,8 @@ interface InventarioState {
   cargarDatos: () => Promise<void>;
 
   // Productos
-  agregarProducto: (data: Omit<Producto, 'id'>) => Promise<{ success: boolean; error?: string }>;
-  editarProducto: (id: number, data: Partial<Omit<Producto, 'id'>>) => Promise<{ success: boolean; error?: string }>;
+  agregarProducto: (data: ProductoPayload) => Promise<{ success: boolean; error?: string }>;
+  editarProducto: (id: number, data: Partial<ProductoPayload>) => Promise<{ success: boolean; error?: string }>;
   eliminarProducto: (id: number) => Promise<{ success: boolean; error?: string }>;
 
   // Ventas
@@ -157,7 +174,7 @@ export const useInventarioStore = create<InventarioState>((set, get) => ({
 
       set({
         productos: productos.map(normalizeProducto),
-        ventas,
+        ventas: ventas.map(normalizeVenta),
         cargando: false,
         errorCarga: null,
       });
@@ -241,7 +258,7 @@ export const useInventarioStore = create<InventarioState>((set, get) => ({
         true
       );
 
-      set((state) => ({ ventas: [...state.ventas, venta] }));
+      set((state) => ({ ventas: [...state.ventas, normalizeVenta(venta)] }));
       await get().cargarDatos();
       return { success: true };
     } catch (error) {
@@ -261,7 +278,7 @@ export const useInventarioStore = create<InventarioState>((set, get) => ({
       );
 
       set((state) => ({
-        ventas: state.ventas.map((item) => (item.id === id ? venta : item)),
+        ventas: state.ventas.map((item) => (item.id === id ? normalizeVenta(venta) : item)),
       }));
       await get().cargarDatos();
       return { success: true };
@@ -281,7 +298,7 @@ export const useInventarioStore = create<InventarioState>((set, get) => ({
       );
 
       set((state) => ({
-        ventas: state.ventas.map((item) => (item.id === id ? venta : item)),
+        ventas: state.ventas.map((item) => (item.id === id ? normalizeVenta(venta) : item)),
       }));
       await get().cargarDatos();
       return { success: true };

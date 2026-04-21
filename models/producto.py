@@ -9,7 +9,9 @@ class Producto(Base):
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     nombre = Column(String(100), nullable=False, index=True)
-    descripcion = Column(String(500), nullable=True)
+    descripcion = Column(String(500), nullable=False)
+    categoria = Column(String(50), nullable=False, index=True)
+    codigo = Column(String(32), nullable=False, unique=True, index=True)
     precio = Column(Float, nullable=False)
     stock = Column(Integer, nullable=False, default=0)
 
